@@ -1,42 +1,48 @@
-(function(window){
-
-  'use strict';
-
-  window.App = angular.module('OWMApp', ['ngRoute']);
-
-  window.App.value('owmCities', ['New York', 'Houston', 'Chicago']);
-
-  window.App.config(function($routeProvider){
-    $routeProvider.when('/', {
-      templateUrl: '/views/home.html',
-      controller: 'homeCtrl as home'
-    })
-    .when('/cities/:city', {
-      templateUrl: '/views/city.html',
-      controller: 'cityCtrl as city',
-      resolve: {
-        city: function(owmCities, $route, $location){
-          var city = $route.current.params.city;
-            if(owmCities.indexOf(city) === -1 ) {
-                $location.path('/error');
-                return;
+angular.module('OWMApp', ['ngRoute', 'ngAnimate'])
+  .value('owmCities',
+        ['New York', 'Houston', 'Chicago'])
+	.config(function($routeProvider){
+        $routeProvider.when('/', {
+            templateUrl: './views/home.html',
+            controller : 'HomeCtrl'
+        })
+        .when('/cities/:city', {
+            templateUrl : './views/city.html',
+            controller : 'CityCtrl',
+            resolve : {
+                city: function(owmCities, $route, $location) {
+                    var city = $route.current.params.city;
+                    if(owmCities.indexOf(city) == -1 ) {
+                        $location.path('/error');
+                        return;
+                    }
+                    return city;
+                }
             }
-            return city;
-        }
-      }
+        })
+        .when('/error', {
+		    template : '<p>Error Page Not Found</p>'
+		})
+        .otherwise({
+            redirectTo : '/error'
+        });
     })
-    .when('/error', {
-      template: '<p>Error Page</p>'
+    .run(function($rootScope, $location, $timeout) {
+        $rootScope.$on('$routeChangeError', function() {
+            $location.path("/error");
+        });
+        $rootScope.$on('$routeChangeStart', function() {
+            $rootScope.isLoading = true;
+        });
+        $rootScope.$on('$routeChangeSuccess', function() {
+          $timeout(function() {
+            $rootScope.isLoading = false;
+          }, 1000);
+        });
     })
-    .otherwise({
-        redirectTo : '/error'
-    });
-  });
-
-  window.App.run(function($rootScope, $location) {
-    $rootScope.$on('$routeChangeError', function() {
-        $location.path('/error');
-    });
-  });
-
-}(window));
+    .controller('HomeCtrl', function($scope) {
+        //empty for now
+    })
+    .controller('CityCtrl', function($scope, city) {
+   		$scope.city = city;
+	});
